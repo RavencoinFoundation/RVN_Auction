@@ -50,7 +50,7 @@ function display_row($art)
 	echo '</td>';
 
 	echo '<td>';
-	echo "<a href=index.php?id=" . $art['id'] . "'>";
+	echo "<a href='index.php?id=" . $art['id'] . "'>";
 	echo $art['id'];
 	echo "</a>";
 	echo '</td>';
