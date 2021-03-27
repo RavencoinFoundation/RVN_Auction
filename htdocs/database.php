@@ -2,11 +2,11 @@
 function connect()
 {
 	$url='127.0.0.1:3306';
-	$username='root';
-	$password='root';
-	$conn=mysqli_connect($url,$username,$password,"art");
+	$username='art';
+	$password='art';
+	$conn=new mysqli($url,$username,$password,"art");
 	if(!$conn){
- 		die('Could not Connect My Sql:' .mysql_error());
+ 		die('Could not Connect MySql:'.$conn->connect_error);
 	}
 	return($conn);	
 }?>

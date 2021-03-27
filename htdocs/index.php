@@ -2,17 +2,18 @@
 include_once 'database.php';
   define("STATUS_INACTIVE", 0);
   define("STATUS_FOR_SALE", 1);
-  define("STATUS_AUCTION", 2);
-  define("STATUS_UNSOLD", 999);
-  define("STATUS_SOLD", 42);
+  define("STATUS_SOLD", 2);
+  define("STATUS_AUCTION_LIVE", 1001);
+  define("STATUS_AUCTION_SOLD", 1002);
+  define("STATUS_AUCTION_UNSOLD", 1003);
 
   function install_state_change_monitor($seconds)
   {
   	$millisecs = $seconds * 1000;
   	echo "<script>";
-	echo "setTimeout(function(){";
+	  echo "setTimeout(function(){";
    	echo "	window.location.reload(1);";
-	echo "}, " . $millisecs . ");";
+	  echo "}, " . $millisecs . ");";
   	echo "</script>";
   }
 
@@ -38,14 +39,28 @@ include_once 'database.php';
 
   }
 
+  function is_sale($status)
+  {
+    if (($status >=1) and ($status < 1000))
+      return(True);
+    return(False);
+  }
+
+  function is_auction($status)
+  {
+    if (($status >=1000) and ($status < 2000))
+      return(True);
+    return(False);
+  }
+
   function display_tag($art)
   {	
-  	 if ($art['is_sale'] == 0)
+  	 if (is_auction($art['status']))
   	 {
   	 	display_auction($art);
 
 	 }
-	 else
+	 else if (is_sale($art['status']))
 	 {
   	 	display_sale($art);
 	 }
@@ -95,19 +110,19 @@ include_once 'database.php';
 
   function display_auction($art)
   {
-  	 if (($art['status'] == STATUS_AUCTION) && !is_auction_started($art))
+  	 if (($art['status'] == STATUS_AUCTION_LIVE) && !is_auction_started($art))
   	 {
   	 	echo "Auction begins at " . get_a_nice_date($art['start']);
 			 	
   	 }
-  	 else if (($art['status'] == STATUS_AUCTION) && is_auction_ended($art))
+  	 else if (($art['status'] == STATUS_AUCTION_LIVE) && is_auction_ended($art))
   	 {
   	 	 echo "Auction closed at " . get_a_nice_date($art['auction_end']);
 
   	 	 echo "<br />";
   	 	 echo "Final bids being analyzed.";  	 	
   	 }
-  	 else if (($art['status'] == STATUS_AUCTION) && is_auction_live($art))
+  	 else if (($art['status'] == STATUS_AUCTION_LIVE) && is_auction_live($art))
   	 {
   	 	 echo "<strong>Auction is Live</strong><br />";
   	 	 if ($art['current_bid']  > 0)
@@ -123,20 +138,18 @@ include_once 'database.php';
 	  	 	echo "Minimum Bid: " . $art['min_bid'] . " RVN";
 	  	 }
 
+
 	  	 echo "<br />";
-  	 	 echo "<img src='https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=" . $art['address'] . "' height=200 title='" . $art['address'] .  "' />";
-	  	 echo "<br />";
-	  	 echo $art['address'];
-	  	 echo "<br />";
+       display_barcode($art['assigned_address']);
 	  	 echo "Auction ends at " . get_a_nice_date($art['auction_end']);
 	  	 echo "<br />";
 	  	 echo "Remaining: " . get_time_left($art['auction_end']);
   	 }
-  	 else if ($art['status'] == STATUS_SOLD)
+  	 else if ($art['status'] == STATUS_AUCTION_SOLD)
   	 {
   	 	 echo "<img src='images/sold.png' height=200 title='Sold' />";
   	 }
-  	 else if ($art['status'] == STATUS_UNSOLD)
+  	 else if ($art['status'] == STATUS_AUCTION_UNSOLD)
   	 {
   	 	echo "Auction Complete";
   	 	echo "<br />";
@@ -160,15 +173,22 @@ include_once 'database.php';
   	 }
   }
 
+  function display_barcode($address)
+  {
+    echo "<img src='https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=" . $address . "' height=200 title='" . $address .  "' />";
+    echo "<br />";
+    echo $address;
+  }
+
     function display_sale($art)
   {
   	 if ($art['status'] == STATUS_FOR_SALE)
   	 {
 	  	 echo "Price: " . $art['price'] . " RVN";
+
 	  	 echo "<br />";
-  	 	 echo "<img src='https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=" . $art['address'] . "' height=200 title='" . $art['address'] .  "' />";
-	  	 echo "<br />";
-	  	 echo $art['address'];
+       display_barcode($art['assigned_address']);
+
 	  	 echo "<br />";
   	 }
   	 else if ($art['status'] == STATUS_SOLD)
@@ -202,11 +222,12 @@ include_once 'database.php';
   	exit("id: <strong>" . $id . "</strong> not found.  Usage: example.com/index.php?id=an-art-piece");
   }	
 
+
   echo '<table>';
-  echo '<tr>';
+  echo "<tr valign=top>";
  
 
-  echo '<td width=75%>';
+  echo "<td width=75%>";
   display_art($art['id'], $art['image_url']);
   echo '</td>';
 
